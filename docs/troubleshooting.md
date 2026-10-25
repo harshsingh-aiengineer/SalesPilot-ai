@@ -49,14 +49,6 @@ Only the worker service schedules polls and follow-ups. The API can still queue 
 
 Follow-up tasks use an idempotency key of lead id plus follow-up timestamp. Drafts also respect `follow_up_cooldown_hours`. Restarting the worker does not send the same follow-up again when that key already exists.
 
-## Reset the fictional sample
-
-```powershell
-.\scripts\reset-demo-data.ps1
-```
-
-That command only removes `synthetic_seed` leads. It does not delete Gmail messages.
-
 ## Wipe local data
 
 `docker compose down` keeps volumes. To delete the database and downloaded models:

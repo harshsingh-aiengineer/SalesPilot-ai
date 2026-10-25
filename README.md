@@ -64,24 +64,16 @@ Edit `.env` and replace `SALESPILOT_PASSWORD` and `SALESPILOT_SECRET`.
 .\scripts\start.ps1
 ```
 
-That one command starts the site, API, and worker in Docker. It uses the Ollama app already running on this PC and the installed model `qwen2.5:3b`. Gmail and the CRM database stay in `backend\data`. See [docs/local-model-setup.md](docs/local-model-setup.md).
-
-Gmail setup: [docs/gmail-oauth-setup.md](docs/gmail-oauth-setup.md).
-
-Seed fictional Dubai blinds leads. They are marked `synthetic_seed` and are not Gmail messages.
-
-```powershell
-docker compose exec api python -m app.seed --yes
-```
+That one command starts the site, API, and worker in Docker. It uses the Ollama app already running on this PC and the installed model `qwen2.5:3b`. Gmail and the CRM database stay in `backend\data`. See [docs/local-model-setup.md](docs/local-model-setup.md) and [docs/gmail-oauth-setup.md](docs/gmail-oauth-setup.md).
 
 ## Everyday commands
 
 ```powershell
+.\scripts\start.ps1
 .\scripts\status.ps1
 .\scripts\logs.ps1
 .\scripts\logs.ps1 api
 .\scripts\stop.ps1
-.\scripts\reset-demo-data.ps1
 ```
 
 ## Tests
@@ -114,9 +106,9 @@ Customer sends require a confirmation click unless you explicitly enable automat
 ```text
 backend/          FastAPI, SQLAlchemy, Alembic, agent, Gmail, worker
 frontend/         React, Vite, Tailwind
-scripts/          PowerShell start, stop, status, logs, reset, model check
-docs/             OAuth, model, troubleshooting, example agent run
+scripts/          PowerShell start, stop, status, and logs scripts
+docs/             Gmail OAuth, local model, and troubleshooting guides
 docker-compose.yml
 ```
 
-More help: [docs/troubleshooting.md](docs/troubleshooting.md) and [docs/example-agent-run.md](docs/example-agent-run.md).
+More help: [docs/troubleshooting.md](docs/troubleshooting.md).

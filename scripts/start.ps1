@@ -31,7 +31,8 @@ Get-CimInstance Win32_Process -Filter "Name='python.exe' OR Name='node.exe'" |
 
 $owner = docker ps --filter "publish=8000" --format "{{.Names}}"
 if ($owner -and $owner -notmatch "salespilot-ai") {
-    throw "Port 8000 is already used by Docker container '$owner'. Stop that container, then run this script again. Gmail login is registered on port 8000, so SalesPilot has to use it."
+    Write-Host "Stopping container '$owner' on port 8000 so SalesPilot can bind port 8000..."
+    docker stop $owner | Out-Null
 }
 
 docker compose up -d --build

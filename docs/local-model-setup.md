@@ -9,7 +9,7 @@ That is the model installed on this machine. The name comes from `OLLAMA_MODEL`.
 ## Confirm the model
 
 ```powershell
-.\scripts\check-model.ps1
+ollama list
 ```
 
 Ready means:

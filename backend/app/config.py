@@ -46,7 +46,6 @@ class Settings(BaseSettings):
 
     business_timezone: str = "Asia/Dubai"
     log_level: str = "INFO"
-    seed_demo_data: bool = False
     request_body_limit_bytes: int = 1_000_000
 
     @property
