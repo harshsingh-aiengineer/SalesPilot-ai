@@ -26,6 +26,16 @@ class LoginResponse(BaseModel):
     expires_at: datetime
 
 
+def _clean_email(value: str | None) -> str | None:
+    if value is None or value.strip() == "":
+        return None
+    cleaned = value.strip()
+    local, _, domain = cleaned.rpartition("@")
+    if not local or "." not in domain or domain.startswith(".") or domain.endswith("."):
+        raise ValueError("email is not valid")
+    return cleaned
+
+
 class LeadBase(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     email: str | None = Field(default=None, max_length=320)
@@ -60,12 +70,7 @@ class LeadBase(BaseModel):
     @field_validator("email")
     @classmethod
     def _email(cls, value: str | None) -> str | None:
-        if value is None or value.strip() == "":
-            return None
-        cleaned = value.strip()
-        if "@" not in cleaned or "." not in cleaned.split("@")[-1]:
-            raise ValueError("email is not valid")
-        return cleaned
+        return _clean_email(value)
 
 
 class LeadCreate(LeadBase):
@@ -105,6 +110,11 @@ class LeadUpdate(BaseModel):
         if value is not None and value not in LEAD_PRIORITIES:
             raise ValueError(f"priority must be one of {sorted(LEAD_PRIORITIES)}")
         return value
+
+    @field_validator("email")
+    @classmethod
+    def _email(cls, value: str | None) -> str | None:
+        return _clean_email(value)
 
 
 class LeadOut(BaseModel):

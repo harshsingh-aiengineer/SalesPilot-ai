@@ -193,3 +193,36 @@ def test_cancel_queued_run(client, auth_header, monkeypatch):
     assert cancelled.status_code == 200
     assert cancelled.json()["status"] == "cancelled"
     assert started["go"] is False
+
+
+def test_chat_retry_timeout_is_reported_as_timeout(monkeypatch):
+    import httpx
+    import pytest
+
+    from app import llm
+
+    calls = []
+
+    def fake_post(url, json, timeout):
+        calls.append(dict(json))
+        if len(calls) == 1:
+            return httpx.Response(400, text="think is not supported")
+        raise httpx.ReadTimeout("slow")
+
+    monkeypatch.setattr(llm.httpx, "post", fake_post)
+    with pytest.raises(LlmError) as raised:
+        llm.chat([{"role": "user", "content": "hi"}])
+    assert raised.value.code == "ollama_timeout"
+    assert "think" in calls[0] and "think" not in calls[1]
+
+
+def test_unparseable_tool_arguments_are_rejected(client):
+    from app.database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        result = execute_tool(db, "create_lead", None)
+        assert result["ok"] is False
+        assert result["error"] == "invalid_arguments"
+    finally:
+        db.close()

@@ -169,7 +169,7 @@ def execute_run(db: Session, run_id: int) -> AgentRun:
             )
             db.add(step)
             db.commit()
-            result = execute_tool(db, str(name), arguments if isinstance(arguments, dict) else arguments)
+            result = execute_tool(db, str(name), arguments)
             if result.get("ok") and name == "send_approved_email" and result.get("status") == "provider_accepted":
                 evidence["send"] = True
             if result.get("ok") and name == "create_lead":

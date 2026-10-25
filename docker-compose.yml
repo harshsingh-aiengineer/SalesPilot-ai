@@ -4,6 +4,7 @@
 services:
   api:
     build: ./backend
+    image: salespilot-backend:local
     ports:
       - "127.0.0.1:8000:8000"
     env_file:
@@ -30,7 +31,8 @@ services:
     restart: unless-stopped
 
   worker:
-    build: ./backend
+    image: salespilot-backend:local
+    pull_policy: never
     command: ["python", "-m", "app.worker.main"]
     env_file:
       - .env
@@ -57,6 +59,7 @@ services:
 
   frontend:
     build: ./frontend
+    image: salespilot-frontend:local
     ports:
       - "127.0.0.1:5173:80"
     depends_on:

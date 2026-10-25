@@ -62,6 +62,15 @@ def _timeout() -> httpx.Timeout:
     return httpx.Timeout(seconds, connect=5.0)
 
 
+def _post_chat(url: str, body: dict) -> httpx.Response:
+    try:
+        return httpx.post(url, json=body, timeout=_timeout())
+    except httpx.TimeoutException as exc:
+        raise LlmError("ollama_timeout", "The local model did not respond before the timeout.") from exc
+    except httpx.HTTPError as exc:
+        raise LlmError("ollama_unavailable", f"Ollama request failed: {exc.__class__.__name__}") from exc
+
+
 def ollama_tags() -> dict:
     base = get_settings().ollama_base_url.rstrip("/")
     try:
@@ -121,19 +130,11 @@ def chat(messages: list[dict], tools: list[dict] | None = None, *, force_json: b
         body["tools"] = tools
     if force_json:
         body["format"] = "json"
-    base = settings.ollama_base_url.rstrip("/")
-    try:
-        response = httpx.post(f"{base}/api/chat", json=body, timeout=_timeout())
-    except httpx.TimeoutException as exc:
-        raise LlmError("ollama_timeout", "The local model did not respond before the timeout.") from exc
-    except httpx.HTTPError as exc:
-        raise LlmError("ollama_unavailable", f"Ollama request failed: {exc.__class__.__name__}") from exc
+    url = f"{settings.ollama_base_url.rstrip('/')}/api/chat"
+    response = _post_chat(url, body)
     if response.status_code == 400 and "think" in body:
         body.pop("think", None)
-        try:
-            response = httpx.post(f"{base}/api/chat", json=body, timeout=_timeout())
-        except httpx.HTTPError as exc:
-            raise LlmError("ollama_unavailable", f"Ollama request failed: {exc.__class__.__name__}") from exc
+        response = _post_chat(url, body)
     if response.status_code >= 400:
         detail = response.text[:300]
         raise LlmError("ollama_error", f"Ollama returned HTTP {response.status_code}: {detail}")

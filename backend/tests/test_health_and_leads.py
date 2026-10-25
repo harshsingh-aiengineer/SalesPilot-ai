@@ -56,6 +56,16 @@ def test_lead_crud_search_and_delete(client, auth_header):
     assert missing.status_code == 404
 
 
+def test_lead_update_rejects_invalid_email(client, auth_header):
+    created = client.post("/api/v1/leads", headers=auth_header, json={"name": "Mail Check", "email": "ok@example.com"})
+    assert created.status_code == 201, created.text
+    lead_id = created.json()["id"]
+    for bad in ("invalid", "test@", "@example.com", "a@b."):
+        response = client.patch(f"/api/v1/leads/{lead_id}", headers=auth_header, json={"email": bad})
+        assert response.status_code == 422, bad
+    assert client.get(f"/api/v1/leads/{lead_id}", headers=auth_header).json()["email"] == "ok@example.com"
+
+
 def test_lead_persists_across_restart(db_url, tmp_path, monkeypatch):
     from fastapi.testclient import TestClient
 
