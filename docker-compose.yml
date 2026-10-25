@@ -1,0 +1,71 @@
+# One-click stack. Ollama stays on this PC (already has qwen2.5:3b).
+# API, worker, and the site share backend/data, including the Gmail token.
+
+services:
+  api:
+    build: ./backend
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: sqlite:////data/salespilot.db
+      DATA_DIR: /data
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
+      PUBLIC_API_BASE: http://127.0.0.1:8000
+      FRONTEND_BASE_URL: http://127.0.0.1:5173
+      GMAIL_OAUTH_REDIRECT_URI: http://127.0.0.1:8000/api/v1/gmail/callback
+      CORS_ORIGINS: http://127.0.0.1:5173,http://localhost:5173
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./backend/data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 25s
+    restart: unless-stopped
+
+  worker:
+    build: ./backend
+    command: ["python", "-m", "app.worker.main"]
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: sqlite:////data/salespilot.db
+      DATA_DIR: /data
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
+      GMAIL_OAUTH_REDIRECT_URI: http://127.0.0.1:8000/api/v1/gmail/callback
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./backend/data:/data
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.worker.healthcheck"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 25s
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:5173:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 15s
+    restart: unless-stopped
